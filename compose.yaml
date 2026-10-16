@@ -1,0 +1,18 @@
+name: download-craft
+
+services:
+  download-craft:
+    build: .
+    image: download-craft
+    # Run as the owner of the downloads folder; change this if your IDs
+    # are not 1000 (see `id -u` and `id -g`).
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "127.0.0.1:7878:7878"
+    volumes:
+      - ~/Downloads:/downloads
+      - config:/config
+    restart: unless-stopped
+
+volumes:
+  config:

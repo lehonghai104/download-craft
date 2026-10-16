@@ -1,0 +1,7 @@
+.git
+/download-craft
+/download-pro
+**/*.parts
+Dockerfile
+.dockerignore
+compose.yaml

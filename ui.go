@@ -22,6 +22,7 @@ func runUI(args []string) int {
 	dir := flags.String("d", defaultDownloadDir(), "`directory` to save downloads into")
 	conns := flags.Int("n", 8, "default number of connections per download")
 	listFile := flags.String("list", defaultListFile(), "`file` that remembers the download list between runs")
+	localhostOnly := flags.Bool("localhost", false, "only accept requests addressed to localhost, even when -addr is not a loopback address (for a container whose port is published on 127.0.0.1)")
 	flags.Usage = func() {
 		fmt.Fprint(flags.Output(), "Usage: download-craft ui [options]\n\nOpens a download manager in your browser.\n\nOptions:\n")
 		flags.PrintDefaults()
@@ -47,10 +48,12 @@ func runUI(args []string) int {
 	ip := net.ParseIP(host)
 	loopback := ip != nil && ip.IsLoopback()
 	if !loopback {
-		fmt.Fprintln(os.Stderr, "warning: the UI is reachable from other machines, and anyone who can reach it can download files onto this one")
+		if !*localhostOnly {
+			fmt.Fprintln(os.Stderr, "warning: the UI is reachable from other machines, and anyone who can reach it can download files onto this one")
+		}
 		host = "localhost"
 	}
-	srv := &http.Server{Handler: mgr.Handler(loopback), ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{Handler: mgr.Handler(loopback || *localhostOnly), ReadHeaderTimeout: 10 * time.Second}
 
 	absDir, _ := filepath.Abs(*dir)
 	fmt.Printf("Download Craft is running at http://%s\n", net.JoinHostPort(host, port))

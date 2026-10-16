@@ -73,11 +73,47 @@ UI starts.
 | `-d` | `~/Downloads` | directory to save into |
 | `-n` | 8 | default connections per download |
 | `-list` | `~/.config/download-craft/downloads.json` | where the list is kept (`""` to not keep it) |
+| `-localhost` | | require a localhost address even when `-addr` is not one (see "Docker") |
 
 By default the UI only listens on localhost. Anyone who can reach it can make
 this machine download files, so it rejects requests from other web sites and
 requests that don't name a localhost address. If you bind `-addr` to a LAN
 address, everyone on that network can use it.
+
+## Docker
+
+```sh
+docker compose up -d       # then open http://localhost:7878
+```
+
+This builds the image and runs the browser UI. Downloads are saved in
+`~/Downloads`, and the download list is kept in a Docker volume. The container
+runs as user and group 1000. If `id -u` or `id -g` prints something else, set
+`user:` in `compose.yaml`.
+
+Without Compose:
+
+```sh
+docker build -t download-craft .
+docker run -d --name download-craft -p 127.0.0.1:7878:7878 \
+  --user "$(id -u):$(id -g)" \
+  -v ~/Downloads:/downloads -v download-craft-config:/config \
+  download-craft
+```
+
+Pass a URL instead to use the command line. The file is saved in the current
+directory:
+
+```sh
+docker run --rm -it --user "$(id -u):$(id -g)" -v "$PWD":/downloads \
+  download-craft -n 16 https://example.com/ubuntu.iso
+```
+
+The UI inside the container listens on all interfaces, but it is started with
+`-localhost`, so it still rejects requests that don't name a localhost
+address. Publish the port on `127.0.0.1` as shown. If you publish it on every
+interface, the rest of your network can still reach the UI by sending
+`Host: localhost`.
 
 ## How it works
 
